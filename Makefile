@@ -1,7 +1,7 @@
 CXX = g++
 FLAGS = -std=c++11 -Wall -Wextra -g -pedantic -pedantic-errors -O2
 NAME = MyTraceroute
-OBJS = traceroute.o
+OBJS = main.o traceroute.o
 
 all: $(OBJS) 
 	$(CXX) $^ -o $(NAME)
