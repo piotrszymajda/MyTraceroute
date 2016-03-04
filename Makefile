@@ -1,15 +1,13 @@
-CC = clang #g++
+CXX = clang #g++
 FLAGS = -std=c++11 -Wall -Wextra -g -pedantic -pedantic-errors -O2
 NAME = MyTraceroute
-OBJS = traceroute
+OBJS = traceroute.o
 
 all: $(OBJS) 
+	$(CXX) $^ -o $(NAME)
 
-$(OBJS): %: %.o
-	$(CC) $@.o -o $(NAME)
-
-traceroute.o:
-	$(CC) -c $(FLAGS) traceroute.cpp
+$(OBJS): %.o: %.cpp
+	$(CXX) -c $(FLAGS) $< -o $@
 
 clean:
 	rm -f *.o
@@ -17,4 +15,6 @@ clean:
 distclean:
 	rm -f $(NAME)
 	
-.PHONY: all clean distclean
+realclean: clean distclean  
+	
+.PHONY: all clean distclean realclean
