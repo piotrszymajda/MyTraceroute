@@ -5,6 +5,9 @@ Autor: Piotr Szymajda - 273 023
 #include <iostream>
 #include <cstring>
 
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "traceroute.h"
 
 using namespace std;
@@ -21,9 +24,11 @@ int main(int argc, char *argv[])
         
         if(inet_pton(AF_INET, argv[1], &(recp.sin_addr)) == 1) // check "is argv[1] ip adress ?"
         {
-            cout << "IP: " << argv[1] <<"\n";
+            //cout << "IP: " << argv[1] <<"\n";
+            u_int32_t pid = getpid();
+            //cout << "PID: " << pid << "\n";
             // traceroute to specific IP
-            if(trace(recp) != 0)
+            if( trace(recp, pid) != 0)
             {
                 return 3;
             }
@@ -53,7 +58,7 @@ void man()
 {
     cout << "MyTraceroute - print the route of packets from local to network host\n";
     cout << "Usage:\n";
-    cout << "\t./MyTraceroute ip_adress\n";
+    cout << "\tsudo ./MyTraceroute <ip_adress>\n";
     cout << "Example:\n";
-    cout << "\t./MyTraceroute 8.8.8.8\n";
+    cout << "\tsudo ./MyTraceroute 8.8.8.8\n";
 }

@@ -3,6 +3,9 @@
 
 #include <arpa/inet.h>
 
-int trace(sockaddr_in &recipient);
+#define MAX_TTL 30
+#define TIMEOUT 1000
+
+int trace(sockaddr_in &recipient, u_int16_t pid);
 
 #endif // TRACE_H
