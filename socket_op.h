@@ -1,3 +1,4 @@
+// Autor: Piotr Szymajda - 273 023
 #ifndef SOCKET_OP_H
 #define SOCKET_OP_H
 

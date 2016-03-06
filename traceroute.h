@@ -1,3 +1,4 @@
+// Autor: Piotr Szymajda - 273 023
 #ifndef TRACE_H
 #define TRACE_H
 

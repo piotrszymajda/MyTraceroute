@@ -1,3 +1,4 @@
+// Autor: Piotr Szymajda - 273 023
 #include "traceroute.h"
 #include "socket_op.h"
 

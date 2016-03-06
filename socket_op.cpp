@@ -1,3 +1,4 @@
+// Autor: Piotr Szymajda - 273 023
 #include "socket_op.h"
 
 #include <errno.h>
