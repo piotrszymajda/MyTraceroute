@@ -68,6 +68,8 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
     for(int ttl = 1; ttl <= MAX_TTL; ++ttl)
     {
         std::cout << " " << ttl << "  ";
+        if(ttl < 10) std::cout << " ";
+  
         for(int i = 0; i < 3; ++i)
         {
             prepare_packet (icmp_header, pid, i + 3*(ttl-1));
@@ -97,7 +99,7 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
             {
                 char sender_ip[20]; 
 		        inet_ntop(AF_INET, &(sender.sin_addr), sender_ip, sizeof(sender_ip));
-		        std::cout << sender_ip << " ";
+		        std::cout << sender_ip << " \t";
 		        host_name = true;
 		    }    
                 
