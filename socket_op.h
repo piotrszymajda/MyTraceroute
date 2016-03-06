@@ -10,7 +10,7 @@ void Sendto (int fd, struct icmphdr &icmp_hdr, int flags, const struct sockaddr_
              
 void Setsockopt (int sockfd, int level, int name, const void *val, socklen_t len);
                  
-ssize_t Recvfrom (int fd, void *ptr, int flags, struct sockaddr_in *saddr);
+ssize_t Recvfrom (int fd, void *ptr, int flags, struct sockaddr_in &saddr);
 
 #endif // SOCKET_OP_H
 

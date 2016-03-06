@@ -35,10 +35,10 @@ void Setsockopt(int sockfd, int level, int name, const void *val, socklen_t len)
     }
 }
 
-ssize_t Recvfrom(int fd, void *ptr, int flags, struct sockaddr_in *saddr)
+ssize_t Recvfrom(int fd, void *ptr, int flags, struct sockaddr_in &saddr)
 {   
 	socklen_t saddr_len = sizeof(saddr);
-	ssize_t	rec_bytes = recvfrom(fd, ptr, sizeof(ptr), flags, (struct sockaddr*)saddr, &saddr_len);
+	ssize_t	rec_bytes = recvfrom(fd, ptr, IP_MAXPACKET, flags, (struct sockaddr*)&saddr, &saddr_len);
 	if ( rec_bytes == -1)
 		if ( errno != EAGAIN )
 		{
