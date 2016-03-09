@@ -80,7 +80,7 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
             
             int p = check_packet(buff, rec_bytes, pid, ttl);
 		    
-		    if(p == -1 || p/3 != ttl -1)
+		    if(p == -1)
 		        continue;
             
             if(!host_name)
