@@ -2,8 +2,6 @@
 Autor: Piotr Szymajda - 273 023
 
 Program typu "Traceroute" - pierwsze zad. programistyczne na SK
-Wersja nieukończona, wysłana w celu zabezpieczenia przed czynnikami losowymi,
-mogącymi wpłynać na nie oddanie zadania w terminie.
 */
 #include <iostream>
 #include <cstring>
