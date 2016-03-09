@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
         {
             //cout << "IP: " << argv[1] <<"\n";
             u_int32_t pid = getpid();
-            //cout << "PID: " << pid << "\n";
+            cout << "PID: " << pid << "\n";
             // traceroute to specific IP
             if( trace(recp, pid) != 0)
             {

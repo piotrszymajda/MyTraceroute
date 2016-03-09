@@ -1,6 +1,7 @@
 // Autor: Piotr Szymajda - 273 023
 #include "traceroute.h"
 #include "socket_op.h"
+#include "packet_support.h"
 
 #include <assert.h>
 #include <sys/time.h>
@@ -10,36 +11,6 @@
 #define microsec_to_milisec 1000LL
 
 #define N_PACKETS 3
-
-u_int16_t compute_icmp_checksum (const u_int16_t *buff, u_int32_t length)
-{
-    u_int32_t sum = 0;
-
-    while (length > 1)  
-    {
-        sum += *buff++;
-        length -= 2;
-    }
-
-    if (length == 1) // if length is odd 
-        sum += htons(*(u_char *)buff << 8);
-
-    sum = (sum >> 16) + (sum & 0xffff); 
-    return ~(sum + (sum >> 16));
-}
-
-void prepare_packet(icmphdr &icmp_header, u_int16_t id, u_int16_t sequence )
-{
-    icmp_header.type = ICMP_ECHO;
-    icmp_header.code = 0;
-    icmp_header.un.echo.id = htons(id); // process id
-    icmp_header.un.echo.sequence = htons(sequence); // packet number
-    icmp_header.checksum = 0;
-    icmp_header.checksum = compute_icmp_checksum( 
-        (u_int16_t*) &icmp_header, sizeof(icmp_header) );
-        
-    //std::cout << "ICMP - CS = " << icmp_header.checksum << "\n";
-}
 
 long long time_interval(struct timeval &start, struct timeval &end)
 {
@@ -55,6 +26,13 @@ void print_time(long long time_us)
     std::cout << (double)time_us/microsec_to_milisec << " ms ";//\n";
 }
 
+void print_host_name(sockaddr_in &host)
+{
+    char host_ip[20]; 
+    inet_ntop(AF_INET, &(host.sin_addr), host_ip, sizeof(host_ip));
+    std::cout << host_ip << " \t";
+}
+
 int trace(sockaddr_in &recipient, u_int16_t pid)
 {
     int sockfd = Socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
@@ -66,7 +44,7 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
     struct icmphdr icmp_header;
     struct timeval start[N_PACKETS], end;
     struct sockaddr_in sender;
-    char buff[IP_MAXPACKET+1];
+    u_int8_t buff[IP_MAXPACKET+1];
     
     for(int ttl = 1; ttl <= MAX_TTL; ++ttl)
     {
@@ -86,6 +64,7 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
         bool host_name = false;
         long long time_average = 0;
         
+        unsigned long prev_sender_ip = 0;
         while(recived_pac < N_PACKETS)
         {
             ssize_t	rec_bytes = Recvfrom(sockfd, buff, MSG_DONTWAIT, sender);
@@ -99,18 +78,23 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
 				continue;
 			}
             
+            int p = check_packet(buff, rec_bytes, pid, ttl);
+		    
+		    if(p == -1 || p/3 != ttl -1)
+		        continue;
+            
             if(!host_name)
             {
-                char sender_ip[20]; 
-		        inet_ntop(AF_INET, &(sender.sin_addr), sender_ip, sizeof(sender_ip));
-		        std::cout << sender_ip << " \t";
+                print_host_name(sender);
 		        host_name = true;
-		    }    
-                
-            //struct iphdr* 		ip_header = (struct iphdr*) buff;
-		    //ssize_t				ip_header_len = 4 * ip_header->ihl;
-		
-            int p = 0; //packet seq % N_PACKETS
+		    }
+		    else if(sender.sin_addr.s_addr - prev_sender_ip != 0)
+		    {
+                print_host_name(sender);
+		    }
+            prev_sender_ip = sender.sin_addr.s_addr;
+		        
+            p %= N_PACKETS;
             long long time_us = time_interval(start[p], end);
             if( time_us >= TIMEOUT )
             {
@@ -137,6 +121,7 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
         
         
         std::cout << "\n";
+        
         if( sender.sin_addr.s_addr - recipient.sin_addr.s_addr  == 0)
             return  0;
     }   

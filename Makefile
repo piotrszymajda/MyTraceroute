@@ -2,7 +2,7 @@
 CXX = g++
 FLAGS = -std=c++11 -Wall -Wextra -g -pedantic -pedantic-errors # -O2
 NAME = MyTraceroute
-OBJS = main.o socket_op.o traceroute.o
+OBJS = main.o socket_op.o traceroute.o packet_support.o
 
 all: $(OBJS) 
 	$(CXX) $^ -o $(NAME)
