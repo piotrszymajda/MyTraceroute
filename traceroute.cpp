@@ -9,6 +9,8 @@
 #define microsec_to_sec 1000000LL
 #define microsec_to_milisec 1000LL
 
+#define N_PACKETS 3
+
 u_int16_t compute_icmp_checksum (const u_int16_t *buff, u_int32_t length)
 {
     u_int32_t sum = 0;
@@ -62,7 +64,7 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
     std::cout << "Traceroute to IP: " << ip << ", Max TTL: "<< MAX_TTL << "\n";
     
     struct icmphdr icmp_header;
-    struct timeval start[3], end;
+    struct timeval start[N_PACKETS], end;
     struct sockaddr_in sender;
     char buff[IP_MAXPACKET+1];
     
@@ -71,9 +73,9 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
         std::cout << " " << ttl << "  ";
         if(ttl < 10) std::cout << " ";
   
-        for(int i = 0; i < 3; ++i)
+        for(int i = 0; i < N_PACKETS; ++i)
         {
-            prepare_packet (icmp_header, pid, i + 3*(ttl-1));
+            prepare_packet (icmp_header, pid, i + N_PACKETS*(ttl-1));
             Setsockopt (sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(int));
             Sendto ( sockfd, icmp_header, 0, &recipient );
             gettimeofday(&start[i], NULL); 
@@ -82,8 +84,9 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
         // TO DO reciv packet
         short recived_pac = 0;
         bool host_name = false;
+        long long time_average = 0;
         
-        while(recived_pac < 3)
+        while(recived_pac < N_PACKETS)
         {
             ssize_t	rec_bytes = Recvfrom(sockfd, buff, MSG_DONTWAIT, sender);
 	
@@ -91,7 +94,7 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
             
             if(rec_bytes < 0) 
             {// if time between send last packet and now is > TIMEOUT stop waiting 
-				if(time_interval(start[2], end) > TIMEOUT) 
+				if(time_interval(start[N_PACKETS-1], end) > TIMEOUT) 
 				    break;
 				continue;
 			}
@@ -107,7 +110,7 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
             //struct iphdr* 		ip_header = (struct iphdr*) buff;
 		    //ssize_t				ip_header_len = 4 * ip_header->ihl;
 		
-            int p = 0; //packet seq % 3
+            int p = 0; //packet seq % N_PACKETS
             long long time_us = time_interval(start[p], end);
             if( time_us >= TIMEOUT )
             {
@@ -115,9 +118,23 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
             }
             else
             {
-                print_time(time_us);
+                time_average += time_us;
+                //print_time(time_us);
             }
+            
+            ++recived_pac;
         }
+        
+        if(recived_pac < N_PACKETS)
+        {   
+            if(recived_pac == 0)
+                std::cout << "*";
+            else
+                std::cout << "???";
+        }
+        else
+            print_time(time_average / N_PACKETS);
+        
         
         std::cout << "\n";
         if( sender.sin_addr.s_addr - recipient.sin_addr.s_addr  == 0)
