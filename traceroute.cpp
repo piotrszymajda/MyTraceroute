@@ -59,53 +59,47 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
             gettimeofday(&start[i], NULL); 
         }
         
-        // TO DO reciv packet
-        short recived_pac = 0;
-        bool host_name = false;
+        // Recived packets
+        short     recived_pac = 0;
+        bool      host_name = false;
         long long time_average = 0;
         
         unsigned long prev_sender_ip = 0;
         while(recived_pac < N_PACKETS)
         {
-            ssize_t	rec_bytes = Recvfrom(sockfd, buff, MSG_DONTWAIT, sender);
+            ssize_t rec_bytes = Recvfrom(sockfd, buff, MSG_DONTWAIT, sender);
 	
             gettimeofday(&end, NULL);
             
             if(rec_bytes < 0) 
-            {// if time between send last packet and now is > TIMEOUT stop waiting 
-				if(time_interval(start[N_PACKETS-1], end) > TIMEOUT) 
-				    break;
-				continue;
-			}
+            {// if time between send last packet and now is >=> TIMEOUT stop waiting 
+                if(time_interval(start[N_PACKETS-1], end) >= TIMEOUT) 
+                    break;
+                continue;
+            }
             
             int p = check_packet(buff, rec_bytes, pid, ttl);
-		    
-		    if(p == -1)
-		        continue;
+            
+            if(p == -1)
+                continue;
             
             if(!host_name)
             {
                 print_host_name(sender);
-		        host_name = true;
-		    }
-		    else if(sender.sin_addr.s_addr - prev_sender_ip != 0)
-		    {
+	        host_name = true;
+            }
+            else if(sender.sin_addr.s_addr - prev_sender_ip != 0)
+            {
                 print_host_name(sender);
-		    }
+            }
             prev_sender_ip = sender.sin_addr.s_addr;
 		        
             p %= N_PACKETS;
             long long time_us = time_interval(start[p], end);
-            if( time_us >= TIMEOUT )
-            {
-                std::cout << "TIMEOUT\n";
-            }
-            else
-            {
-                time_average += time_us;
-                //print_time(time_us);
-            }
-            
+            assert( time_us <= TIMEOUT );
+            time_average += time_us;
+            //print_time(time_us);
+ 
             ++recived_pac;
         }
         
