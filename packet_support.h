@@ -1,3 +1,4 @@
+// Autor: Piotr Szymajda - 273 023
 #ifndef PACKET_SUPP_H
 #define PACKET_SUPP_H
 
