@@ -31,6 +31,10 @@ void print_host_name(sockaddr_in &host)
     char host_ip[20]; 
     inet_ntop(AF_INET, &(host.sin_addr), host_ip, sizeof(host_ip));
     std::cout << host_ip << " \t";
+    if(strlen(host_ip) < 10 )
+    {
+        std::cout << "\t";
+    }
 }
 
 int trace(sockaddr_in &recipient, u_int16_t pid)
@@ -42,9 +46,10 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
     std::cout << "Traceroute to IP: " << ip << ", Max TTL: "<< MAX_TTL << "\n";
     
     struct icmphdr icmp_header;
-    struct timeval start[N_PACKETS], end;
+    struct timeval start[N_PACKETS], end, timeout;
     struct sockaddr_in sender;
     u_int8_t buff[IP_MAXPACKET+1];
+    
     
     for(int ttl = 1; ttl <= MAX_TTL; ++ttl)
     {
@@ -65,11 +70,27 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
         long long time_average = 0;
         
         unsigned long prev_sender_ip = 0;
+        
+        timeout.tv_sec = TIMEOUT / microsec_to_sec;
+        timeout.tv_usec = TIMEOUT % microsec_to_sec;
+        
         while(recived_pac < N_PACKETS)
         {
+            fd_set read_fd;
+            FD_ZERO(&read_fd);
+            FD_SET(sockfd, &read_fd);
+            int rc = select(sockfd+1, &read_fd, NULL, NULL, &timeout);
+   
             ssize_t rec_bytes = Recvfrom(sockfd, buff, MSG_DONTWAIT, sender);
-	
+    
             gettimeofday(&end, NULL);
+   
+            if(rc == 0)
+                break;
+            else if(rc < 0)
+            {
+                print_error("select", -1);
+            }
             
             if(rec_bytes < 0) 
             {// if time between send last packet and now is >=> TIMEOUT stop waiting 
@@ -78,7 +99,7 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
                 continue;
             }
             
-            int p = check_packet(buff, rec_bytes, pid, ttl);
+            int p = check_packet(buff, pid, ttl);
             
             if(p == -1)
                 continue;
@@ -86,14 +107,14 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
             if(!host_name)
             {
                 print_host_name(sender);
-	        host_name = true;
+                host_name = true;
             }
             else if(sender.sin_addr.s_addr - prev_sender_ip != 0)
             {
                 print_host_name(sender);
             }
             prev_sender_ip = sender.sin_addr.s_addr;
-		        
+                
             p %= N_PACKETS;
             long long time_us = time_interval(start[p], end);
             assert( time_us <= TIMEOUT );

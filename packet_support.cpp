@@ -3,19 +3,35 @@
 #include <iostream>
 
 
-int check_packet(u_int8_t * buff, ssize_t packet_len, u_int16_t pid, int ttl)
+int check_packet(u_int8_t * buff, u_int16_t pid, int ttl)
 {
 
-    if(packet_len > 56)
-        packet_len = 56;
-        
-    //256 * x_i + x_{i+1}
-    int rec_pid = ((int)buff[packet_len-4])*256 + ((int)buff[packet_len-3]);
-    int rec_seq = ((int)buff[packet_len-2])*256 + ((int)buff[packet_len-1]); 
+    struct ip* ip_packet = (struct ip*) buff;
+    struct icmp* icmp_packet = (struct icmp*)(buff + ip_packet->ip_hl*4);
 
-    //std::cout << "PID " << pid << " " << rec_pid << "  ";
-    //std::cout << "SEQ " << seq << "\n";
-    
+    if( !(icmp_packet->icmp_type == ICMP_TIME_EXCEEDED &&
+		  icmp_packet->icmp_code == ICMP_EXC_TTL) &&
+		  icmp_packet->icmp_type != ICMP_ECHOREPLY ) 
+    {
+		 return -1;
+	}
+
+    int rec_pid, rec_seq;
+
+	if(icmp_packet->icmp_type == ICMP_TIME_EXCEEDED) 
+	{
+		struct ip* orig = (struct ip*)(icmp_packet->icmp_data);
+		icmp_packet = (struct icmp*)(icmp_packet->icmp_data + orig->ip_hl*4);
+		rec_pid = htons(icmp_packet->icmp_id);
+		rec_seq = htons(icmp_packet->icmp_seq);
+	}
+
+	else if(icmp_packet->icmp_type == ICMP_ECHOREPLY)
+	{
+		rec_pid = htons(icmp_packet->icmp_id);
+		rec_seq = htons(icmp_packet->icmp_seq);
+	}   
+
     if ( rec_pid != pid )
         return -1;
         

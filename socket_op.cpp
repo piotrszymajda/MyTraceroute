@@ -2,8 +2,6 @@
 #include "socket_op.h"
 
 #include <errno.h>
-#include <string.h>
-#include <iostream>
 
 void print_error (std::string fname, int exit_no)
 {
