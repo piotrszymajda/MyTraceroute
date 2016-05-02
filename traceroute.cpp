@@ -51,6 +51,8 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
     u_int8_t buff[IP_MAXPACKET+1];
     
     
+    fd_set read_fd;
+    
     for(int ttl = 1; ttl <= MAX_TTL; ++ttl)
     {
         std::cout << " " << ttl << "  ";
@@ -71,14 +73,14 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
         
         unsigned long prev_sender_ip = 0;
         
+		FD_ZERO(&read_fd);
+		FD_SET(sockfd, &read_fd);
+		
         timeout.tv_sec = TIMEOUT / microsec_to_sec;
         timeout.tv_usec = TIMEOUT % microsec_to_sec;
         
         while(recived_pac < N_PACKETS)
         {
-            fd_set read_fd;
-            FD_ZERO(&read_fd);
-            FD_SET(sockfd, &read_fd);
             int rc = select(sockfd+1, &read_fd, NULL, NULL, &timeout);
    
             ssize_t rec_bytes = Recvfrom(sockfd, buff, MSG_DONTWAIT, sender);
@@ -137,7 +139,7 @@ int trace(sockaddr_in &recipient, u_int16_t pid)
         
         std::cout << "\n";
         
-        if( sender.sin_addr.s_addr - recipient.sin_addr.s_addr  == 0)
+        if( sender.sin_addr.s_addr - recipient.sin_addr.s_addr  == 0 )
             return  0;
     }   
     return 0;
